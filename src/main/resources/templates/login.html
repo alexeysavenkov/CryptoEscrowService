@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+<title>Escrow Login</title>
+
+<link rel="stylesheet"
+	  href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+	  integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+	  crossorigin="anonymous">
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<link href="https://getbootstrap.com/docs/4.0/examples/sign-in/signin.css" rel="stylesheet">
+
+</head>
+
+<body class="text-center">
+    <div class="bg"></div>
+    <div class="jumbotron" style="background: rgba(255,255,255,.9); margin-top: calc(1185px - 110vh); padding-top: 30px;">
+        <form method="POST" th:action="@{/login}" class="form-signin">
+            <img src="http://funkyimg.com/i/2FrK5.png" alt="" height="75">
+            <br><br>
+
+            <h1 class="h3 mb-3 font-weight-normal">You are one step away from safe transactions</h1>
+
+            <div>
+                <p>
+
+            <br><br>
+
+            <label for="inputEmail" class="sr-only">Email address</label>
+            <input type="email" id="inputEmail" name="email" class="form-control" placeholder="Email address" required="" autofocus="">
+            <label for="inputPassword" class="sr-only">Password</label>
+            <input type="password" name="password" id="inputPassword" class="form-control" placeholder="Password" required="">
+
+            <p style="color:red" th:if="${param.error}">Invalid email or password </p>
+
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Login</button>
+
+            <br><br>
+
+            <a th:href="@{/register}">
+                Don't have account? Register!
+            </a>
+
+            <p class="mt-5 mb-3 text-muted">Naukma © 2018</p>
+        </form>
+    </div>
+</body>
+
+<style>
+    body > .bg {
+        background-image: url('https://i1.wp.com/pabdiscuss.com/wp-content/uploads/2017/09/blU8upr.jpg?fit=1803%2C1020');
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-size: contain;
+        background-repeat: no-repeat;
+        opacity: 0.9;
+        z-index: -999;
+    }
+    body {
+        background: rgba(0,0,0,0.95);
+    }
+    .fa-shield-check {
+        background-image: url(http://icons.iconarchive.com/icons/paomedia/small-n-flat/1024/shield-ok-icon.png);
+        background-size: 32px;
+        width: 32px;
+        height: 32px;
+        display: inline-block;
+        position: relative;
+        top: 10px;
+    }
+</style>
+
+</html>
