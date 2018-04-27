@@ -108,7 +108,7 @@
 
     <div th:if="${transaction.getStatus() == T(com.naukma.models.TransactionStatus).DisputeStarted}">
         <div th:if="${isAdmin}">
-            <form th:action='${"/transaction/" + transaction.getId() + "/dispute/start"}' method="POST">
+            <form th:action='${"/transaction/" + transaction.getId() + "/dispute/resolve"}' method="POST">
                 <div class="row col-10">
                     <input class="form-control" type="text" name="amountRefunded" placeholder="Amount refunded">
                     <button class="btn btn-warning btn-lg btn-block col-12" type="submit">Resolve Dispute</button>

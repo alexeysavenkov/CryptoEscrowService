@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -22,11 +23,12 @@ public class DisputeService {
     public void createDispute(@NotNull Transaction transaction) {
         Dispute dispute = new Dispute();
         dispute.setTransactionId(transaction.getId());
+        dispute.setTimeCreated(new Date());
         disputeRepository.saveDispute(dispute);
     }
 
     public void resolveDispute(Dispute dispute, BigDecimal amountRefunded) {
-        dispute.setTimeResolved(new java.sql.Date(new java.util.Date().getTime()));
+        dispute.setTimeResolved(new java.util.Date());
         disputeRepository.saveDispute(dispute);
     }
 }

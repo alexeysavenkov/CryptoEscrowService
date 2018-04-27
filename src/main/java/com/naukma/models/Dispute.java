@@ -6,7 +6,7 @@ import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
-import java.sql.Date;
+import java.util.Date;
 
 @Entity
 @Table(name="dispute")
@@ -23,13 +23,14 @@ public class Dispute {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="time_created")
     @NotNull
+    @Temporal(TemporalType.TIMESTAMP)
     private Date timeCreated;
 
     @Column(name="time_resolved")
     private Date timeResolved;
 
     @OneToOne
-    @JoinColumn(name="transactionId")
+    @JoinColumn(name="transaction_id")
     private Transaction transaction;
 
     public Integer getTransactionId() {

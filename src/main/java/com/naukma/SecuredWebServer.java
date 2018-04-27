@@ -228,6 +228,10 @@ public class SecuredWebServer implements WebMvcConfigurer {
             throw new AccessDeniedException("");
         }
 
+
+        disputeService.createDispute(transaction);
+
+
         transactionService.updateTransactionStatus(transaction, TransactionStatus.DisputeStarted);
 
         return "redirect:/view/" + transaction.getId();
