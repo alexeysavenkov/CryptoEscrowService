@@ -104,11 +104,13 @@
         </div>
     </div>
 
+    <br><br>
+
     <div th:if="${transaction.getStatus() == T(com.naukma.models.TransactionStatus).DisputeStarted}">
         <div th:if="${isAdmin}">
             <form th:action='${"/transaction/" + transaction.getId() + "/dispute/start"}' method="POST">
-                <div class="row">
-                    <input class="form-control" type="text" name="amountRefunded">
+                <div class="row col-10">
+                    <input class="form-control" type="text" name="amountRefunded" placeholder="Amount refunded">
                     <button class="btn btn-warning btn-lg btn-block col-12" type="submit">Resolve Dispute</button>
                 </div>
             </form>
@@ -135,13 +137,13 @@
 
     <ul class="list-group" th:each="message : ${messages}">
         <li th:if="${message.isByMoneySender()}" class="list-group-item list-group-item-primary" >
-            (Money Sender) <b th:if="${message.userId == currentUser.getId()}">(You)</b> <span th:text="${message.user.getEmail()}"></span> <span style="float:right" th:text="${message.getTimeCreated()}"></span>
+            (Money Sender) <b th:if="${message.userId == currentUser.getId()}">(You)</b> <span th:text="${message.user.getEmail()}"></span> <span style="float:right" th:text="${message.getTimeCreatedFromNow()}"></span>
         </li>
         <li th:if="${message.isByMoneyRecepient()}" class="list-group-item list-group-item-success" >
-            (Money Recepient) <b th:if="${message.userId == currentUser.getId()}">(You)</b> <span th:text="${message.user.getEmail()}"></span> <span style="float:right" th:text="${message.getTimeCreated()}"></span>
+            (Money Recepient) <b th:if="${message.userId == currentUser.getId()}">(You)</b> <span th:text="${message.user.getEmail()}"></span> <span style="float:right" th:text="${message.getTimeCreatedFromNow()}"></span>
         </li>
         <li th:if="${message.isByAdmin()}" class="list-group-item list-group-item-danger" >
-            (Admin) <b th:if="${message.userId == currentUser.getId()}">(You)</b> <span th:text="${message.user.getEmail()}"></span> <span style="float:right" th:text="${message.getTimeCreated()}"></span>
+            (Admin) <b th:if="${message.userId == currentUser.getId()}">(You)</b> <span th:text="${message.user.getEmail()}"></span> <span style="float:right" th:text="${message.getTimeCreatedFromNow()}"></span>
         </li>
 
         </li>

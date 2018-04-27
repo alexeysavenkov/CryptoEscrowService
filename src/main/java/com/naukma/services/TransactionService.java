@@ -17,7 +17,7 @@ public class TransactionService {
     TransactionRepository transactionRepository;
 
     public void createTransaction(@NotNull Transaction transaction) {
-        transaction.setTimeCreated(new java.sql.Date(new java.util.Date().getTime()));
+        transaction.setTimeCreated(new java.util.Date());
         transactionRepository.saveTransaction(transaction);
     }
 

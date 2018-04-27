@@ -1,9 +1,11 @@
 package com.naukma.models;
 
+import org.ocpsoft.prettytime.PrettyTime;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import java.sql.Date;
+import java.util.Date;
 
 @Entity
 @Table(name="message")
@@ -46,7 +48,14 @@ public class Message {
 
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="time_created")
-    private Date timeCreated;
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.util.Date timeCreated;
+
+    public String getTimeCreatedFromNow() {
+        PrettyTime p = new PrettyTime();
+        return p.format(timeCreated);
+    }
+
 
     public Integer getId() {
         return id;
@@ -88,7 +97,7 @@ public class Message {
         this.message = message;
     }
 
-    public Date getTimeCreated() {
+    public java.util.Date getTimeCreated() {
         return timeCreated;
     }
 

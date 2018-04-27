@@ -24,7 +24,7 @@
 
 <nav class="site-header sticky-top py-1">
     <div class="container d-flex flex-column flex-md-row justify-content-between">
-        <a class="py-2" href="/dashboard">Dashboard </a>
+        <a class="py-2" href="/dashboard"></a>
         <a class="py-2 d-none d-md-inline-block" href="/login?logout">Sign Out</a>
     </div>
 </nav>
@@ -32,8 +32,8 @@
 <div class="container">
     <div class="py-5 text-center">
         <img src="http://funkyimg.com/i/2FrK5.png" alt="" height="75">
-        <h2>Your transactions</h2>
-        <p class="lead">Safer than ever before</p>
+        <h2>All transactions</h2>
+        <p class="lead">Admin panel</p>
     </div>
 
     <h2 th:if="${transactions.isEmpty()}">No transactions yet</h2>
@@ -47,12 +47,8 @@
         </tr>
         <tr th:each="transaction : ${transactions}">
             <td>
-                <p th:if="${transaction.getRecipient().getId() == currentUser.getId()}">
-                    From <b th:text="${transaction.getSender().getEmail()}"></b>
-                </p>
-                <p th:if="${transaction.getSender().getId() == currentUser.getId()}">
-                    To <b th:text="${transaction.getRecipient().getEmail()}"></b>
-                </p>
+                From <b th:text="${transaction.getSender().getEmail()}"></b>
+                To <b th:text="${transaction.getRecipient().getEmail()}"></b>
             </td>
             <td th:text="${transaction.getAmount().doubleValue() + ' ' + transaction.getCryptocurrency()}"></td>
             <td th:text="${transaction.getStatus().toString()}"></td>

@@ -2,13 +2,14 @@ package com.naukma.models;
 
 
 import net.bytebuddy.implementation.bind.annotation.Default;
+import org.ocpsoft.prettytime.PrettyTime;
 
 import javax.persistence.*;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
-import java.sql.Date;
+import java.util.Date;
 
 @Entity
 @Table(name="transaction")
@@ -60,9 +61,10 @@ public class Transaction {
 
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="time_created")
-    private Date timeCreated;
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.util.Date timeCreated;
 
-    public Date getTimeUpdated() {
+    public java.util.Date getTimeUpdated() {
         return timeUpdated;
     }
 
@@ -72,7 +74,8 @@ public class Transaction {
 
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name="time_updated")
-    private Date timeUpdated;
+    @Temporal(TemporalType.TIMESTAMP)
+    private java.util.Date timeUpdated;
 
     @ManyToOne
     @JoinColumn(name="sender_id", insertable = false, updatable = false)
@@ -171,5 +174,10 @@ public class Transaction {
 
     public void setTimeCreated(Date timeCreated) {
         this.timeCreated = timeCreated;
+    }
+
+    public String getTimeUpdatedFromNow() {
+        PrettyTime p = new PrettyTime();
+        return p.format(timeUpdated);
     }
 }

@@ -18,7 +18,7 @@ public class TransactionRepository {
     private EntityManager em;
 
     public void saveTransaction(Transaction transaction) {
-        transaction.setTimeUpdated(new java.sql.Date(new java.util.Date().getTime()));
+        transaction.setTimeUpdated(new java.util.Date());
         em.persist(transaction);
     }
 

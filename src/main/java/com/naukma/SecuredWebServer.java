@@ -89,7 +89,7 @@ public class SecuredWebServer implements WebMvcConfigurer {
     @GetMapping("/dashboard")
     public String dashboard(Map<String, Object> model) {
         if(auth().getAuthorities().stream().anyMatch(x -> x.getAuthority().equals("ROLE_ADMIN"))) {
-            return "dashboardAdmin";
+            return "forward:/viewAll";
         } else {
             model.put("transactionCount", transactionService.countTransactionsByUser(currentUser()));
             return "dashboardUser";
