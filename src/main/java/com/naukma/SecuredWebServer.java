@@ -1,16 +1,17 @@
 package com.naukma;
 
+import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import javax.sql.DataSource;
 import javax.validation.Valid;
 
-import com.naukma.models.Transaction;
-import com.naukma.models.TransactionForm;
-import com.naukma.models.TransactionStatus;
-import com.naukma.models.User;
+import com.naukma.models.*;
 import com.naukma.services.AuthService;
+import com.naukma.services.DisputeService;
+import com.naukma.services.MessageService;
 import com.naukma.services.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,6 +20,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -44,6 +46,12 @@ public class SecuredWebServer implements WebMvcConfigurer {
 
     @Autowired
     TransactionService transactionService;
+
+    @Autowired
+    DisputeService disputeService;
+
+    @Autowired
+    MessageService messageService;
 
 	@GetMapping("/")
 	public String home(Map<String, Object> model) {
@@ -134,6 +142,7 @@ public class SecuredWebServer implements WebMvcConfigurer {
             transaction.setSenderId(anotherUser.getId());
             transaction.setRecipientId(currentUser.getId());
         }
+        transaction.setCreatorId(currentUser.getId());
         transactionService.createTransaction(transaction);
 
         return "redirect:/dashboard";
@@ -151,12 +160,133 @@ public class SecuredWebServer implements WebMvcConfigurer {
         }
     }
 
-    @GetMapping("/view/:transactionId")
+    @GetMapping("/view/{transactionId}")
     public String viewSingle(@PathVariable(name="transactionId") Integer transactionId, Map<String, Object> model) {
+        Transaction transaction = transactionService.getById(transactionId);
 
-	    return "viewSingleUser";
+        boolean isAdmin = isAdmin();
+        boolean isSender = transaction.getSenderId().equals(currentUser().getId());
+        boolean isRecipient = transaction.getRecipientId().equals(currentUser().getId());
+        boolean isCreator = transaction.getCreatorId().equals(currentUser().getId());
+
+        if(!isAdmin && !isSender && !isRecipient) {
+            throw new AccessDeniedException("");
+        }
+
+        List<Message> messages = messageService.getMessagesByTransaction(transaction);
+
+        model.put("isAdmin", isAdmin);
+        model.put("isSender", isSender);
+        model.put("isRecipient", isRecipient);
+        model.put("isCreator", isCreator);
+        model.put("transaction", transaction);
+        model.put("dispute", transaction.getDispute());
+        model.put("messages", messages);
+        model.put("currentUser", currentUser());
+
+	    return "viewSingle";
     }
 
+    @PostMapping("/transaction/{transactionId}/proceed")
+    public String proceed(@PathVariable(name="transactionId") Integer transactionId, Map<String, Object> model) {
+        Transaction transaction = transactionService.getById(transactionId);
+
+        boolean isAdmin = isAdmin();
+        boolean isSender = transaction.getSenderId().equals(currentUser().getId());
+        boolean isRecipient = transaction.getRecipientId().equals(currentUser().getId());
+
+        if(!isAdmin && !isSender && !isRecipient) {
+            throw new AccessDeniedException("");
+        }
+
+        // TODO Add security
+        switch(transaction.getStatus()) {
+            case WaitingForTermAgreement:
+                transactionService.updateTransactionStatus(transaction, TransactionStatus.WaitingForPaymentByMoneySender);
+                break;
+            case WaitingForPaymentByMoneySender:
+                transactionService.updateTransactionStatus(transaction, TransactionStatus.WaitingForItemOrServiceByMoneyRecipient);
+                break;
+            case WaitingForItemOrServiceByMoneyRecipient:
+                transactionService.updateTransactionStatus(transaction, TransactionStatus.CheckingItemOrServiceByMoneySender);
+                break;
+            case CheckingItemOrServiceByMoneySender:
+                transactionService.updateTransactionStatus(transaction, TransactionStatus.FinishedWithoutDispute);
+                break;
+        }
+
+        return "redirect:/view/" + transaction.getId();
+    }
+
+    @PostMapping("/transaction/{transactionId}/dispute/start")
+    public String disputeStart(@PathVariable(name="transactionId") Integer transactionId, Map<String, Object> model) {
+        Transaction transaction = transactionService.getById(transactionId);
+
+        boolean isSender = transaction.getSenderId().equals(currentUser().getId());
+
+        if(!isSender || transaction.getStatus() != TransactionStatus.CheckingItemOrServiceByMoneySender) {
+            throw new AccessDeniedException("");
+        }
+
+        transactionService.updateTransactionStatus(transaction, TransactionStatus.DisputeStarted);
+
+        return "redirect:/view/" + transaction.getId();
+    }
+
+    @PostMapping("/transaction/{transactionId}/dispute/resolve")
+    public String disputeResolve(
+            @PathVariable(name="transactionId") Integer transactionId,
+            @RequestParam(name="amountRefunded") Double amountRefunded,
+            Map<String, Object> model) {
+        Transaction transaction = transactionService.getById(transactionId);
+
+        if(!isAdmin() || transaction.getStatus() != TransactionStatus.DisputeStarted) {
+            throw new AccessDeniedException("");
+        }
+
+        transactionService.updateTransactionStatus(transaction, TransactionStatus.DisputeFinished);
+
+        disputeService.resolveDispute(transaction.getDispute(), BigDecimal.valueOf(amountRefunded));
+
+        return "redirect:/view/" + transaction.getId();
+    }
+
+    @PostMapping("/transaction/{transactionId}/setStatus/{status}")
+    public String setStatus(
+            @PathVariable(name="transactionId") Integer transactionId,
+            @PathVariable(name="status") String statusStr,
+            Map<String, Object> model) {
+        Transaction transaction = transactionService.getById(transactionId);
+
+        TransactionStatus status = TransactionStatus.valueOf(statusStr);
+
+	    if(!isAdmin()) {
+	        throw new AccessDeniedException("");
+        }
+
+        transactionService.updateTransactionStatus(transaction, status);
+
+
+        return "redirect:/view/" + transaction.getId();
+    }
+
+    @PostMapping("/transaction/{transactionId}/message")
+    public String sendMessage(
+            @PathVariable(name="transactionId") Integer transactionId,
+            @RequestParam(name="message") String messageText
+    ) {
+        Transaction transaction = transactionService.getById(transactionId);
+
+        Message message = new Message();
+        message.setUserId(currentUser().getId());
+        message.setTransactionId(transactionId);
+        message.setMessage(messageText);
+        messageService.createMessage(message);
+
+        transactionService.updateLastTimeUpdated(transaction);
+
+        return "redirect:/view/" + transaction.getId();
+    }
 
     private boolean isAdmin() {
         return auth().getAuthorities().stream().anyMatch(x -> x.getAuthority().equals("ROLE_ADMIN"));

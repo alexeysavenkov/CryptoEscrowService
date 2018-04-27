@@ -8,6 +8,5 @@ public enum TransactionStatus {
     FinishedWithoutDispute,
 
     DisputeStarted,
-    WaitingForDecisionByAdmin,
     DisputeFinished
 }

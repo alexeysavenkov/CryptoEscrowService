@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <title>Login</title>
+
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+          crossorigin="anonymous">
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+    <link href="https://getbootstrap.com/docs/4.0/examples/product/product.css" rel="stylesheet">
+
+</head>
+
+
+<body class="bg-light">
+
+
+<nav class="site-header sticky-top py-1">
+    <div class="container d-flex flex-column flex-md-row justify-content-between">
+        <a class="py-2" href="/dashboard">Dashboard </a>
+        <a class="py-2 d-none d-md-inline-block" href="/login?logout">Sign Out</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="py-5 text-center">
+        <img src="http://funkyimg.com/i/2FrK5.png" alt="" height="75">
+        <h2>Transaction <span th:text='${"#" + transaction.getId()}'></h2>
+    </div>
+
+    <table class="table table-striped">
+        <tr>
+            <th>Sender/Recipient</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+        <tr>
+            <td>
+                From <b th:text="${transaction.getSender().getEmail()}"></b>
+                To <b th:text="${transaction.getRecipient().getEmail()}"></b>
+            </td>
+            <td th:text="${transaction.getAmount().doubleValue() + ' ' + transaction.getCryptocurrency()}"></td>
+            <td th:text="${transaction.getStatus().toString()}"></td>
+            <td th:if="${dispute != null && dispute.getAmountRefunded() != null}">
+                <b>Refunded </b> <span th:text="${dispute.amountRefunded + ' ' + transaction.getCryptocurrency()}"></span>
+            </td>
+        </tr>
+    </table>
+
+    <h2>Terms Of Agreement:</h2>
+
+    <textarea readonly class="form-control" rows="20" th:text="${transaction.getTermsOfAgreement()}"></textarea>
+
+    <div th:if="${transaction.getStatus() == T(com.naukma.models.TransactionStatus).WaitingForTermAgreement}">
+        <div th:if="${!isCreator && (isRecipient || isSender)}">
+            <form th:action='${"/transaction/" + transaction.getId() + "/proceed"}' method="POST">
+                <div class="row">
+                    <button class="btn btn-primary btn-lg btn-block col-12" type="submit">Agree with terms</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div th:if="${transaction.getStatus() == T(com.naukma.models.TransactionStatus).WaitingForPaymentByMoneySender}">
+        <div th:if="${isAdmin}">
+            <form th:action='${"/transaction/" + transaction.getId() + "/proceed"}' method="POST">
+                <div class="row">
+                    <button class="btn btn-primary btn-lg btn-block col-12" type="submit">Sender sent the money</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div th:if="${transaction.getStatus() == T(com.naukma.models.TransactionStatus).WaitingForItemOrServiceByMoneyRecipient}">
+        <div th:if="${isRecipient}">
+            <form th:action='${"/transaction/" + transaction.getId() + "/proceed"}' method="POST">
+                <div class="row">
+                    <button class="btn btn-primary btn-lg btn-block col-12" type="submit">Item/Service was sent</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div th:if="${transaction.getStatus() == T(com.naukma.models.TransactionStatus).CheckingItemOrServiceByMoneySender}">
+        <div th:if="${isSender}">
+            <form th:action='${"/transaction/" + transaction.getId() + "/proceed"}' method="POST">
+                <div class="row">
+                    <button class="btn btn-primary btn-lg btn-block col-12" type="submit">Item/Service is fine</button>
+                </div>
+            </form>
+            <form th:action='${"/transaction/" + transaction.getId() + "/dispute/start"}' method="POST">
+                <div class="row">
+                    <button class="btn btn-danger btn-lg btn-block col-12" type="submit">Start Dispute</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div th:if="${transaction.getStatus() == T(com.naukma.models.TransactionStatus).DisputeStarted}">
+        <div th:if="${isAdmin}">
+            <form th:action='${"/transaction/" + transaction.getId() + "/dispute/start"}' method="POST">
+                <div class="row">
+                    <input class="form-control" type="text" name="amountRefunded">
+                    <button class="btn btn-warning btn-lg btn-block col-12" type="submit">Resolve Dispute</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!--<h2>Admin God Mode:</h2>-->
+
+
+    <br>
+
+    <form th:action='${"/transaction/" + transaction.getId() + "/message"}' method="POST">
+        <div class="row col-12">
+            <h3>New Message:</h3>
+            <textarea class="form-control" name="message"></textarea>
+            <button class="btn btn-primary btn-lg btn-block col-12" type="submit">Send Message</button>
+        </div>
+    </form>
+
+    <br><br>
+    <h3>Messages:</h3>
+    <br><br>
+
+
+    <ul class="list-group" th:each="message : ${messages}">
+        <li th:if="${message.isByMoneySender()}" class="list-group-item list-group-item-primary" >
+            (Money Sender) <b th:if="${message.userId == currentUser.getId()}">(You)</b> <span th:text="${message.user.getEmail()}"></span> <span style="float:right" th:text="${message.getTimeCreated()}"></span>
+        </li>
+        <li th:if="${message.isByMoneyRecepient()}" class="list-group-item list-group-item-success" >
+            (Money Recepient) <b th:if="${message.userId == currentUser.getId()}">(You)</b> <span th:text="${message.user.getEmail()}"></span> <span style="float:right" th:text="${message.getTimeCreated()}"></span>
+        </li>
+        <li th:if="${message.isByAdmin()}" class="list-group-item list-group-item-danger" >
+            (Admin) <b th:if="${message.userId == currentUser.getId()}">(You)</b> <span th:text="${message.user.getEmail()}"></span> <span style="float:right" th:text="${message.getTimeCreated()}"></span>
+        </li>
+
+        </li>
+        <li class="list-group-item" th:text="${message.getMessage()}">
+
+        </li>
+    </ul>
+
+
+    <footer class="my-5 pt-5 text-muted text-center text-small">
+        <p class="mb-1">© 2018 Naukma</p>
+        <ul class="list-inline">
+            <li class="list-inline-item"><a href="#">Privacy</a></li>
+            <li class="list-inline-item"><a href="#">Terms</a></li>
+            <li class="list-inline-item"><a href="#">Support</a></li>
+        </ul>
+    </footer>
+</div>
+
+
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script>window.jQuery || document.write('<script src="../../../../assets/js/vendor/jquery-slim.min.js"><\/script>')</script>
+<script src="../../../../assets/js/vendor/popper.min.js"></script>
+<script src="../../../../dist/js/bootstrap.min.js"></script>
+<script src="../../../../assets/js/vendor/holder.min.js"></script>
+<script>
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+    (function() {
+        'use strict';
+
+        window.addEventListener('load', function() {
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            var forms = document.getElementsByClassName('needs-validation');
+
+            // Loop over them and prevent submission
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+
+
+</body>

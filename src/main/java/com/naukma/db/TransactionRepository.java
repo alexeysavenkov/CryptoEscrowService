@@ -18,7 +18,7 @@ public class TransactionRepository {
     private EntityManager em;
 
     public void saveTransaction(Transaction transaction) {
-        transaction.setTimeCreated(new java.sql.Date(new java.util.Date().getTime()));
+        transaction.setTimeUpdated(new java.sql.Date(new java.util.Date().getTime()));
         em.persist(transaction);
     }
 
@@ -28,6 +28,10 @@ public class TransactionRepository {
 
     public List<Transaction> getAllTransactions() {
         return em.createNamedQuery("getAllTransactions", Transaction.class).getResultList();
+    }
+
+    public Transaction getById(int id) {
+        return em.getReference(Transaction.class, id);
     }
 
 }

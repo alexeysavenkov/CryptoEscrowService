@@ -13,8 +13,8 @@ import java.sql.Date;
 @Entity
 @Table(name="transaction")
 @NamedQueries({
-        @NamedQuery(name = "getTransactionsByUser", query = "SELECT t FROM Transaction t WHERE t.senderId = :userId OR t.recipientId = :userId ORDER BY t.timeCreated DESC"),
-        @NamedQuery(name = "getAllTransactions", query = "SELECT t FROM Transaction t ORDER BY t.timeCreated DESC")
+        @NamedQuery(name = "getTransactionsByUser", query = "SELECT t FROM Transaction t WHERE t.senderId = :userId OR t.recipientId = :userId ORDER BY t.timeUpdated DESC"),
+        @NamedQuery(name = "getAllTransactions", query = "SELECT t FROM Transaction t ORDER BY t.timeUpdated DESC")
 })
 public class Transaction {
 
@@ -36,6 +36,17 @@ public class Transaction {
     @Column(name = "recipient_id")
     private Integer recipientId;
 
+    @NotNull
+    @Column(name = "creator_id")
+    private Integer creatorId;
+
+    public Integer getCreatorId() {
+        return creatorId;
+    }
+
+    public void setCreatorId(Integer creatorId) {
+        this.creatorId = creatorId;
+    }
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -51,6 +62,18 @@ public class Transaction {
     @Column(name="time_created")
     private Date timeCreated;
 
+    public Date getTimeUpdated() {
+        return timeUpdated;
+    }
+
+    public void setTimeUpdated(Date timeUpdated) {
+        this.timeUpdated = timeUpdated;
+    }
+
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name="time_updated")
+    private Date timeUpdated;
+
     @ManyToOne
     @JoinColumn(name="sender_id", insertable = false, updatable = false)
     private User sender;
@@ -58,6 +81,17 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name="recipient_id", insertable = false, updatable = false)
     private User recipient;
+
+    @OneToOne(mappedBy="transaction")
+    private Dispute dispute;
+
+    public Dispute getDispute() {
+        return dispute;
+    }
+
+    public void setDispute(Dispute dispute) {
+        this.dispute = dispute;
+    }
 
     public User getSender() {
         return sender;

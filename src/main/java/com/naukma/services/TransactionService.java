@@ -17,6 +17,7 @@ public class TransactionService {
     TransactionRepository transactionRepository;
 
     public void createTransaction(@NotNull Transaction transaction) {
+        transaction.setTimeCreated(new java.sql.Date(new java.util.Date().getTime()));
         transactionRepository.saveTransaction(transaction);
     }
 
@@ -32,8 +33,16 @@ public class TransactionService {
         return getTransactionsByUser(user).size();
     }
 
+    public Transaction getById(int id) {
+        return transactionRepository.getById(id);
+    }
 
-    Transaction updateTransactionStatus(Transaction transaction, TransactionStatus newStatus) {
+    public void updateLastTimeUpdated(Transaction transaction) {
+        transactionRepository.saveTransaction(transaction);
+    }
+
+
+    public Transaction updateTransactionStatus(Transaction transaction, TransactionStatus newStatus) {
         transaction.setStatus(newStatus);
         transactionRepository.saveTransaction(transaction);
         return transaction;
