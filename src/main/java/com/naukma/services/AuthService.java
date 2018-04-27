@@ -26,4 +26,8 @@ public class AuthService {
     public boolean emailIsUsed(String email) {
         return userRepository.findByEmail(email).isPresent();
     }
+
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email).get();
+    }
 }

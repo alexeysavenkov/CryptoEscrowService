@@ -1,39 +1,79 @@
 package com.naukma.models;
 
 
+import net.bytebuddy.implementation.bind.annotation.Default;
+
+import javax.persistence.*;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.sql.Date;
 
+@Entity
+@Table(name="transaction")
+@NamedQueries({
+        @NamedQuery(name = "getTransactionsByUser", query = "SELECT t FROM Transaction t WHERE t.senderId = :userId OR t.recipientId = :userId ORDER BY t.timeCreated DESC"),
+        @NamedQuery(name = "getAllTransactions", query = "SELECT t FROM Transaction t ORDER BY t.timeCreated DESC")
+})
 public class Transaction {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-    @Size(min=100, max=64000)
-    private String termsOfAgreement;
-
-    @Size(min=1, max=100)
+    @Size(min=1, max=20)
     private String cryptocurrency;
 
     @DecimalMin(value="0", inclusive=false)
     private BigDecimal amount;
 
+    @NotNull
+    @Column(name = "sender_id")
+    private Integer senderId;
 
     @NotNull
+    @Column(name = "recipient_id")
+    private Integer recipientId;
+
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
     private TransactionStatus status;
 
 
-    // Sender and recipient do not need to log in
-    // Type of user is detemined by url in browser
-    // i.e. url of transaction is different for sender and for recipient
-    //       and they need to save it and not to share it
+    @Size(min=0, max=64000)
+    @NotNull
+    @Column(name = "terms_of_agreement")
+    private String termsOfAgreement;
 
-    @Size(min=100)
-    private String senderSecretUrl;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name="time_created")
+    private Date timeCreated;
 
-    @Size(min=100)
-    private String recipientSecretUrl;
+    @ManyToOne
+    @JoinColumn(name="sender_id", insertable = false, updatable = false)
+    private User sender;
+
+    @ManyToOne
+    @JoinColumn(name="recipient_id", insertable = false, updatable = false)
+    private User recipient;
+
+    public User getSender() {
+        return sender;
+    }
+
+    public void setSender(User sender) {
+        this.sender = sender;
+    }
+
+    public User getRecipient() {
+        return recipient;
+    }
+
+    public void setRecipient(User recipient) {
+        this.recipient = recipient;
+    }
 
     public Integer getId() {
         return id;
@@ -41,14 +81,6 @@ public class Transaction {
 
     public void setId(Integer id) {
         this.id = id;
-    }
-
-    public String getTermsOfAgreement() {
-        return termsOfAgreement;
-    }
-
-    public void setTermsOfAgreement(String termsOfAgreement) {
-        this.termsOfAgreement = termsOfAgreement;
     }
 
     public String getCryptocurrency() {
@@ -67,6 +99,22 @@ public class Transaction {
         this.amount = amount;
     }
 
+    public Integer getSenderId() {
+        return senderId;
+    }
+
+    public void setSenderId(Integer senderId) {
+        this.senderId = senderId;
+    }
+
+    public Integer getRecipientId() {
+        return recipientId;
+    }
+
+    public void setRecipientId(Integer recipientId) {
+        this.recipientId = recipientId;
+    }
+
     public TransactionStatus getStatus() {
         return status;
     }
@@ -75,19 +123,19 @@ public class Transaction {
         this.status = status;
     }
 
-    public String getSenderSecretUrl() {
-        return senderSecretUrl;
+    public String getTermsOfAgreement() {
+        return termsOfAgreement;
     }
 
-    public void setSenderSecretUrl(String senderSecretUrl) {
-        this.senderSecretUrl = senderSecretUrl;
+    public void setTermsOfAgreement(String termsOfAgreement) {
+        this.termsOfAgreement = termsOfAgreement;
     }
 
-    public String getRecipientSecretUrl() {
-        return recipientSecretUrl;
+    public Date getTimeCreated() {
+        return timeCreated;
     }
 
-    public void setRecipientSecretUrl(String recipientSecretUrl) {
-        this.recipientSecretUrl = recipientSecretUrl;
+    public void setTimeCreated(Date timeCreated) {
+        this.timeCreated = timeCreated;
     }
 }

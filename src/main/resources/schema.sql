@@ -21,6 +21,8 @@ CREATE TABLE `transaction` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `cryptocurrency` varchar(20) NOT NULL DEFAULT '',
   `amount` decimal(65,30) unsigned NOT NULL,
+  `sender_id` int(11) unsigned NOT NULL,
+  `recipient_id` int(11) unsigned NOT NULL,
   `status` varchar(40) NOT NULL DEFAULT '',
   `terms_of_agreement` text NOT NULL,
   `time_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -6,8 +6,12 @@ import java.util.Map;
 import javax.sql.DataSource;
 import javax.validation.Valid;
 
+import com.naukma.models.Transaction;
+import com.naukma.models.TransactionForm;
+import com.naukma.models.TransactionStatus;
 import com.naukma.models.User;
 import com.naukma.services.AuthService;
+import com.naukma.services.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +41,9 @@ public class SecuredWebServer implements WebMvcConfigurer {
 
     @Autowired
     AuthService authService;
+
+    @Autowired
+    TransactionService transactionService;
 
 	@GetMapping("/")
 	public String home(Map<String, Object> model) {
@@ -72,10 +79,11 @@ public class SecuredWebServer implements WebMvcConfigurer {
     }
 
     @GetMapping("/dashboard")
-    public String dashboard() {
+    public String dashboard(Map<String, Object> model) {
         if(auth().getAuthorities().stream().anyMatch(x -> x.getAuthority().equals("ROLE_ADMIN"))) {
             return "dashboardAdmin";
         } else {
+            model.put("transactionCount", transactionService.countTransactionsByUser(currentUser()));
             return "dashboardUser";
         }
     }
@@ -92,6 +100,71 @@ public class SecuredWebServer implements WebMvcConfigurer {
         } else {
             return "login";
         }
+    }
+
+    @GetMapping("/create")
+    public String create(Map<String, Object> model) {
+	    model.put("transactionForm", new TransactionForm());
+	    return "create";
+    }
+
+    @PostMapping("/create")
+    public String create(@Valid @ModelAttribute("transactionForm")TransactionForm transactionForm, BindingResult bindingResult, Map<String, Object> model) {
+        model.put("transactionForm", transactionForm);
+        if(!authService.emailIsUsed(transactionForm.getAnotherUserEmail())) {
+            bindingResult.addError(new ObjectError("anotherUserEmail", "User does not exist"));
+            return "create";
+        }
+        User currentUser = currentUser();
+        User anotherUser = authService.findByEmail(transactionForm.getAnotherUserEmail());
+        if(currentUser.getEmail().equals(transactionForm.getAnotherUserEmail())) {
+            bindingResult.addError(new ObjectError("anotherUserEmail", "Another user's email cannot be yours"));
+            return "create";
+        }
+
+        Transaction transaction = new Transaction();
+        transaction.setAmount(transactionForm.getAmount());
+        transaction.setCryptocurrency(transactionForm.getCryptocurrency());
+        transaction.setStatus(TransactionStatus.WaitingForTermAgreement);
+        transaction.setTermsOfAgreement(transactionForm.getTermsOfAgreement());
+        if(transactionForm.getIsSender() > 0) {
+            transaction.setSenderId(currentUser.getId());
+            transaction.setRecipientId(anotherUser.getId());
+        } else {
+            transaction.setSenderId(anotherUser.getId());
+            transaction.setRecipientId(currentUser.getId());
+        }
+        transactionService.createTransaction(transaction);
+
+        return "redirect:/dashboard";
+    }
+
+    @GetMapping("/viewAll")
+    public String viewAll(Map<String, Object> model) {
+	    model.put("currentUser", currentUser());
+	    if(isAdmin()) {
+            model.put("transactions", transactionService.getAllTransactions());
+	        return "viewAllAdmin";
+        } else {
+	        model.put("transactions", transactionService.getTransactionsByUser(currentUser()));
+	        return "viewAllUser";
+        }
+    }
+
+    @GetMapping("/view/:transactionId")
+    public String viewSingle(@PathVariable(name="transactionId") Integer transactionId, Map<String, Object> model) {
+
+	    return "viewSingleUser";
+    }
+
+
+    private boolean isAdmin() {
+        return auth().getAuthorities().stream().anyMatch(x -> x.getAuthority().equals("ROLE_ADMIN"));
+    }
+
+    private User currentUser() {
+        String email = ((org.springframework.security.core.userdetails.User)auth().getPrincipal()).getUsername();
+        return authService.findByEmail(email);
     }
 
     private Authentication auth() {
